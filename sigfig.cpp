@@ -2,7 +2,7 @@
 #include <string> // std::string
 #include <math.h> // fmod ()
 #include <algorithm> // string.erase (), string.remove ()
-#include <stringstream>
+#include <sstream>
 #include <vector>
 
 using namespace std;
@@ -133,16 +133,17 @@ int getsigamount (int whole_number, double decimal, string input) {
 
 int setsigamount (int whole_number, double decimal, string input, int sigamount) {
 	double number = whole_number + decimal;
-	stringstream ss << number;
+	stringstream ss;
+    ss << number;
 
-	if (getsigamount (int whole_number, double decimal, string input) < sigamount) {
+	if (getsigamount (whole_number, decimal, input) < sigamount) {
 		// increase sigfigs
-		if (input.find ('.') == string.npos) {
+		if (input.find ('.') == string::npos) {
 			
 		} else {
 			
 		}
-	} else if (getsigamount (int whole_number, double decimal, string input) > sigamount) {
+	} else if (getsigamount (whole_number, decimal, input) > sigamount) {
 		// decrease sigfigs
 
 	}
