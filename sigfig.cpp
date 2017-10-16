@@ -4,6 +4,7 @@
 #include <algorithm> // string.erase (), string.remove ()
 #include <sstream>
 #include <vector>
+#include <iomanip>
 
 using namespace std;
 
@@ -31,7 +32,6 @@ int getsigamount (int whole_number, double decimal, string input) {
 			int num = whole_string.at(i) - '0';
 
 			if (num != 0) {
-				cout << whole_string.at(i) << " is " << (int)whole_string.at(i) << " - 48 = " << num << endl;
 				sigfigs ++;
 				continue;
 			}
@@ -43,8 +43,6 @@ int getsigamount (int whole_number, double decimal, string input) {
 
 			for (int j = i+1; j < whole_string.length(); j++) {
 				if (whole_string.at(j)-'0' !=0) {
-					cout << whole_string.at(j)-'0' << " at index " << j << endl;
-
 					sigfigs ++;
 					break;
 				}
@@ -59,7 +57,6 @@ int getsigamount (int whole_number, double decimal, string input) {
 
 		for (int i = 0; i < whole_string.length (); i++) {
 			if (isdigit (whole_string.at (i))) {
-				cout << whole_string.at (i) << endl;
 				total ++;
 			}
 		}
@@ -71,7 +68,6 @@ int getsigamount (int whole_number, double decimal, string input) {
 	if (decimal_string.length() > 0) {
 		// if there are only zeroes in the decimal (i.e. 1.0000), then all of those zeroes are sig figs.
 		int numOfInts = 0;
-		cout << "decimal_string: " << decimal_string << endl;
 
 		for (int i = 0; i < decimal_string.length(); i++) {
 			if (decimal_string.at(i) == '.') {
@@ -81,12 +77,9 @@ int getsigamount (int whole_number, double decimal, string input) {
 			int num = decimal_string.at(i) - '0';
 
 			if (num != 0) {
-				cout << decimal_string.at(i) << " is " << (int)decimal_string.at(i) << " - 48 = " << num << endl;
 				numOfInts ++;
 			}
 		}
-
-		cout << "int num: " << numOfInts << endl;
 
 		if (numOfInts == 0) {
 			if (whole_number == 0) {
@@ -131,24 +124,38 @@ int getsigamount (int whole_number, double decimal, string input) {
 	return sigfigs;
 }
 
-int setsigamount (int whole_number, double decimal, string input, int sigamount) {
+string setsigamount (int whole_number, double decimal, string input, int sigamount) {
 	double number = whole_number + decimal;
 	stringstream ss;
-    ss << number;
+    ss << input;
 
-	if (getsigamount (whole_number, decimal, input) < sigamount) {
-		// increase sigfigs
+    int currentsigamount = getsigamount (whole_number, decimal, input);
+
+	if (currentsigamount < sigamount) {
+	    ss.str("");	
+    
+        // increase sigfigs
 		if (input.find ('.') == string::npos) {
-			
+	        int hypotheticalsigamount = getsigamount (whole_number, decimal, input + ".");
+    
+            if (hypotheticalsigamount > sigamount) {
+                // Scientific notation
+            } else if (hypotheticalsigamount == sigamount) {
+                ss << number << "." << endl;
+            } else {
+                ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number << endl;
+            }	
 		} else {
-			
+            ss << fixed << setprecision (sigamount - currentsigamount) << number << endl;			
 		}
-	} else if (getsigamount (whole_number, decimal, input) > sigamount) {
-		// decrease sigfigs
+	} else if (currentsigamount  > sigamount) {
+        ss.str("");
+        
+        // decrease sigfigs
 
 	}
 
-	return number;
+	return ss.str();
 }
 
 int main () {
@@ -181,5 +188,6 @@ int main () {
 		decimal = 0;
 	}
 
-	cout << "sigfigs: " << getsigamount(whole_number, decimal, input_string) << endl;
+    cout << "current sigfigs: " << getsigamount (whole_number, decimal, input_string) << endl;
+	cout << "with 3 sigfigs: " << setsigamount(whole_number, decimal, input_string, 3) << endl;
 }
