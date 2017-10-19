@@ -133,7 +133,6 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
 
 	if (currentsigamount < sigamount) {
 	    ss.str("");	
-    
         // increase sigfigs
 		if (input.find ('.') == string::npos) {
 	        int hypotheticalsigamount = getsigamount (whole_number, decimal, input + ".");
