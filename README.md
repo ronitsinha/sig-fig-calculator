@@ -11,4 +11,4 @@ things.
 
 ## To-do list
 * The last two of the three main goals
-* Possible create a website for the calculator
+* Possibly create a website for the calculator
