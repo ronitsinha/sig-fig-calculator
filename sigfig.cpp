@@ -1,7 +1,7 @@
 #include <iostream> // std::cout, std::cin, std::getline
 #include <string> // std::string
-#include <math.h> // fmod ()
-#include <algorithm> // string.erase (), string.remove ()
+#include <math.h> // fmod (), pow ()
+#include <algorithm> // string::erase (), string::remove ()
 #include <sstream>
 #include <vector>
 #include <iomanip>
@@ -124,6 +124,22 @@ int getsigamount (int whole_number, double decimal, string input) {
 	return sigfigs;
 }
 
+int getdigits (int num) {
+    int cur_num = num;
+    int digits = 0;
+
+    if (num == 0) {
+        return 0;
+    }
+
+    while (cur_num > 0) {
+        digits ++;
+        cur_num /= 10;
+    }
+
+    return digits;
+}
+
 string setsigamount (int whole_number, double decimal, string input, int sigamount) {
 	double number = whole_number + decimal;
 	stringstream ss;
@@ -139,6 +155,7 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
     
             if (hypotheticalsigamount > sigamount) {
                 // Scientific notation
+                ss << fixed << setprecision (sigamount - 1) << number / pow (10.0, getdigits((int)number) - 1) << "e" << getdigits((int)number) - 1 << endl;
             } else if (hypotheticalsigamount == sigamount) {
                 ss << number << "." << endl;
             } else {
