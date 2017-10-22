@@ -1,6 +1,7 @@
 #include <iostream> // std::cout, std::cin, std::getline
 #include <string> // std::string
 #include <math.h> // fmod (), pow ()
+#include <cmath> // abs
 #include <algorithm> // string::erase (), string::remove ()
 #include <sstream>
 #include <vector>
@@ -167,7 +168,40 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
 	} else if (currentsigamount  > sigamount) {
         ss.str("");
         
+        int sign = int( number / abs(number));
+        string newNumber;
+
         // decrease sigfigs
+        // TODO: Decimal numbers
+
+        if (input.find('.') == string::npos) {
+            newNumber = to_string ((int)abs(number));
+
+            for (int i = newNumber.length()-1; i > 0; i--) {
+                if (i != 0) {
+                    if (newNumber[i] - 48 >= 5) {
+                        newNumber[i-1] ++;
+                    }
+                }
+
+                newNumber[i] = '0';
+
+                if (getsigamount (stoi(newNumber), decimal, newNumber) == sigamount) {
+                    break;
+                } else if (getsigamount (stoi(newNumber), decimal, newNumber + ".") == sigamount) {
+                    newNumber = newNumber + ".";
+                    break;
+                }
+            }
+            
+            if (getsigamount (stoi(newNumber), decimal, newNumber) != sigamount) {
+                ss << fixed << setprecision (sigamount - 1) << sign* stod(newNumber) / pow (10.0, getdigits(stoi(newNumber)) - 1) << "e" << getdigits(stoi(newNumber)) - 1 << endl;     
+            } else {
+                ss << newNumber << endl;
+            }
+        } else {
+
+        }
 	}
 
 	return ss.str();
