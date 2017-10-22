@@ -162,13 +162,12 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
                 ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number << endl;
             }	
 		} else {
-            ss << fixed << setprecision (sigamount - currentsigamount) << number << endl;			
+            ss << fixed << setprecision (sigamount - to_string(whole_number).length()) << number << endl;			
 		}
 	} else if (currentsigamount  > sigamount) {
         ss.str("");
         
         // decrease sigfigs
-
 	}
 
 	return ss.str();
