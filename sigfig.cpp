@@ -172,7 +172,6 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
         string newNumber;
 
         // decrease sigfigs
-        // TODO: Decimal numbers
 
         if (input.find('.') == string::npos) {
             newNumber = to_string ((int)abs(number));
