@@ -178,7 +178,7 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
 
             for (int i = newNumber.length()-1; i > 0; i--) {
                 if (i != 0) {
-                    if (newNumber[i] - 48 >= 5) {
+                    if (newNumber[i] - 48 >= 5 && newNumber[i-1] != '9') {
                         newNumber[i-1] ++;
                     }
                 }
