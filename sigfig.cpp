@@ -195,12 +195,22 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
             }
             
             if (getsigamount (stoi(newNumber), decimal, newNumber) != sigamount) {
-                ss << fixed << setprecision (sigamount - 1) << sign* stod(newNumber) / pow (10.0, getdigits(stoi(newNumber)) - 1) << "e" << getdigits(stoi(newNumber)) - 1 << endl;     
+                ss << fixed << setprecision (sigamount - 1) << sign * stod(newNumber) / pow (10.0, getdigits(stoi(newNumber)) - 1) << "e" << getdigits(stoi(newNumber)) - 1 << endl;     
             } else {
                 ss << newNumber << endl;
             }
         } else {
+        	int decimal_precision = getsigamount (whole_number, decimal, input) - sigamount;
 
+        	if (getsigamount(whole_number, 0, to_string(whole_number) + ".") == sigamount && getsigamount(whole_number, 0, to_string(whole_number)) != sigamount) {
+
+        		ss << whole_number << '.' << endl;
+        		
+        	} else if (getsigamount(whole_number, 0, to_string(whole_number) + ".") > sigamount) {
+        		ss << setsigamount (whole_number, 0, to_string(10 * int(whole_number/10)), sigamount);
+        	} else {
+        		ss << fixed << setprecision (decimal_precision) << number << endl;
+        	}
         }
 	}
 
