@@ -162,8 +162,11 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
             } else {
                 ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number << endl;
             }	
-		} else {
+		} else if (whole_number != 0) {
             ss << fixed << setprecision (sigamount - to_string(whole_number).length()) << number << endl;			
+		} else {
+			// TODO: FIX THE BUG WHERE 0.5 ISN'T WORKING
+			ss << fixed << setprecision (sigamount) << number << endl;
 		}
 	} else if (currentsigamount  > sigamount) {
         ss.str("");
@@ -216,6 +219,97 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
 	return ss.str();
 }
 
+vector<string> splitinput (string input) {
+	vector<string> split_input;
+
+    size_t prev = 0, pos;
+    while ((pos = input.find_first_of("+-/*()", prev)) != string::npos)
+    {
+        if (pos > prev) {
+            split_input.push_back(input.substr(prev, pos-prev));
+            split_input.push_back(input.substr(pos, 1));
+        } 
+
+        if (input[pos] == '(') {
+        	split_input.push_back(input.substr(pos, 1));
+        }
+
+        prev = pos+1;
+    }
+    if (prev < input.length()) {
+        split_input.push_back(input.substr(prev, string::npos));
+    }
+
+    return split_input;
+}
+
+// EVALUATION
+
+
+const char * expressionToParse = "6.5-2.5*10/5+2*5";
+
+istringstream parse(expressionToParse) ;
+
+char peek()
+{
+    return static_cast<char>(parse.peek()) ;
+}
+
+char get()
+{
+    return static_cast<char>(parse.get()) ;                    
+}
+
+double expression();
+
+double number()
+{
+    double result ;
+    parse >> result ;                      
+    return result;
+}
+
+double factor()
+{
+    if ((peek() >= '0' && peek() <= '9') || peek() == '.')
+        return number();
+    else if (peek() == '(')
+    {
+        get(); // '('
+        double result = expression();
+        get(); // ')'
+        return result;
+    }
+    else if (peek() == '-')
+    {
+        get();
+        return -factor();
+    }
+    return 0; // error
+}
+
+double term()
+{
+    double result = factor();
+    while (peek() == '*' || peek() == '/')
+        if (get() == '*')
+            result *= factor();
+        else
+            result /= factor();
+    return result;
+}
+
+double expression()
+{
+    double result = term();
+    while (peek() == '+' || peek() == '-')
+        if (get() == '+')
+            result += term();
+        else
+            result -= term();
+    return result;
+}
+
 int main () {
 	string input_string;
 
@@ -227,25 +321,41 @@ int main () {
 	// Remove unneeded whitespaces ("9. 0 0 1" becomes "9.001")
 	input_string.erase( remove( input_string.begin(), input_string.end(), ' ' ), input_string.end() );
 
-	// TODO: parse input for expressions (i.e. "9.0+10.001") to calcuate sig figs of individual numbers and perform computations
-	// Look into the shunting-yard algorithm
-
-
 	int whole_number;
 	double decimal = 0;
 
-	try {
-		whole_number = (int)stod(input_string);
+	vector<string> split = splitinput (input_string);
 
-		if ((double)whole_number != stod(input_string)) {
-			decimal = fmod (stod(input_string), (double)whole_number);
+	for (int i = 0; i < split.size (); i ++) {
+		try {
+			whole_number = stoi(split[i]);
+
+			try {
+				whole_number = (int)stod(split[i]);
+
+				if ((double)whole_number != stod(split[i])) {
+					if (whole_number != 0) {
+							decimal = fmod (stod(split[i]), (double)whole_number);
+					} else {
+						decimal = stod(split[i]);
+					}
+				}
+			} catch (invalid_argument) {
+				whole_number = stoi (split[i]);
+				decimal = 0;
+			}
+		} catch (invalid_argument) {
+			cout << "invalid argument" << endl;
+			continue;
 		}
-	} catch (invalid_argument) {
 
-		whole_number = stoi (input_string);
-		decimal = 0;
+		cout << "number: " << split[i] << endl;
+		cout << "current sigfigs: " << getsigamount (whole_number, decimal, split[i]) << endl;
+		cout << "with 3 sigfigs: " << setsigamount(whole_number, decimal, split[i], 3) << endl;
 	}
 
-    cout << "current sigfigs: " << getsigamount (whole_number, decimal, input_string) << endl;
-	cout << "with 3 sigfigs: " << setsigamount(whole_number, decimal, input_string, 3) << endl;
+	expressionToParse = input_string.c_str();
+	parse.str (input_string);
+
+	cout << expression () << endl;
 }
