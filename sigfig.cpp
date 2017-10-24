@@ -165,7 +165,6 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
 		} else if (whole_number != 0) {
             ss << fixed << setprecision (sigamount - to_string(whole_number).length()) << number << endl;			
 		} else {
-			// TODO: FIX THE BUG WHERE 0.5 ISN'T WORKING
 			ss << fixed << setprecision (sigamount) << number << endl;
 		}
 	} else if (currentsigamount  > sigamount) {
