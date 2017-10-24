@@ -344,7 +344,6 @@ int main () {
 				decimal = 0;
 			}
 		} catch (invalid_argument) {
-			cout << "invalid argument" << endl;
 			continue;
 		}
 
