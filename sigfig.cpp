@@ -226,12 +226,7 @@ vector<string> splitinput (string input) {
     {
         if (pos > prev) {
             split_input.push_back(input.substr(prev, pos-prev));
-            split_input.push_back(input.substr(pos, 1));
         } 
-
-        if (input[pos] == '(') {
-        	split_input.push_back(input.substr(pos, 1));
-        }
 
         prev = pos+1;
     }
@@ -243,7 +238,7 @@ vector<string> splitinput (string input) {
 }
 
 // EVALUATION
-
+// TODO: Evaluate Scientific Notation
 
 const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
@@ -264,7 +259,7 @@ double expression();
 double number()
 {
     double result ;
-    parse >> result ;                      
+    parse >> result ;                     
     return result;
 }
 
@@ -290,22 +285,29 @@ double factor()
 double term()
 {
     double result = factor();
-    while (peek() == '*' || peek() == '/')
-        if (get() == '*')
+    while (peek() == '*' || peek() == '/') {
+        int sigfigs = min(getsigamount((int)result, result-(int)result, to_string(result)), getsigamount ((int)factor(), factor()-(int)factor(), to_string(factor())));
+        if (get() == '*') {
             result *= factor();
-        else
+        } else {
             result /= factor();
+        }
+        result = stod (setsigamount ((int)result, result-(int)result, to_string(result), sigfigs));
+    }
     return result;
 }
 
 double expression()
 {
     double result = term();
-    while (peek() == '+' || peek() == '-')
+    while (peek() == '+' || peek() == '-') {
+        double scale = 1 / pow (10, min(getsigamount(0, result - (int)result, to_string(result)), getsigamount(0, term() - (int)term(), to_string(term()))));
         if (get() == '+')
-            result += term();
+            result += term();           
         else
             result -= term();
+        result = floor(result / scale + 0.5) * scale;
+    }
     return result;
 }
 
