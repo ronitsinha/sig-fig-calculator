@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <iomanip>
+#include <utility> // std::pair, std::make_pair
 
 using namespace std;
 
@@ -53,6 +54,12 @@ int getsigamount (int whole_number, double decimal, string input) {
 		return sigfigs;
 
 	} else if (whole_number != 0) {
+		if (input.find_first_of('e') != string::npos) {
+			double number = stod (input.substr(0, input.find_first_of('e')));
+
+			return getsigamount ((int)number, number-(int)number, input.substr(0, input.find_first_of('e')));
+		}
+
 		// MAKE SURE TO DOUBLE CHECK THIS RULE
 		int total = 0;
 
@@ -141,10 +148,38 @@ int getdigits (int num) {
     return digits;
 }
 
-string setsigamount (int whole_number, double decimal, string input, int sigamount) {
+int getdecimalplaces (double number) {
+	int places = 0;
+	
+	double num = abs(number);
+	num = num - (int)num;
+
+	while (num != 0) {
+		num *= 10;
+		places ++;
+		num = num - (int)num;
+	}
+
+	return places;
+}
+
+string setsigamount (int whn, double dci, string inpt, int sigamount) {
+	int whole_number = whn;
+	double decimal = dci;
 	double number = whole_number + decimal;
+	string input = inpt;
 	stringstream ss;
     ss << input;
+
+	if (input.find_first_of('e') != string::npos) {
+		double number = stod(input);
+		whole_number = (int)number;
+		decimal = number - whole_number;
+		ss.str("");
+		ss << stod(input);
+		input = ss.str();
+		//number = stod(input);
+	}
 
     int currentsigamount = getsigamount (whole_number, decimal, input);
 
@@ -163,7 +198,7 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
                 ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number << endl;
             }	
 		} else if (whole_number != 0) {
-            ss << fixed << setprecision (sigamount - to_string(whole_number).length()) << number << endl;			
+            ss << fixed << setprecision (sigamount - getdigits(whole_number)) << number << endl;			
 		} else {
 			ss << fixed << setprecision (sigamount) << number << endl;
 		}
@@ -171,45 +206,35 @@ string setsigamount (int whole_number, double decimal, string input, int sigamou
         ss.str("");
         
         int sign = int( number / abs(number));
-        string newNumber;
+        stringstream newNumber;
 
         // decrease sigfigs
 
         if (input.find('.') == string::npos) {
-            newNumber = to_string ((int)abs(number));
+            //newNumber << ((int)abs(number));
 
-            for (int i = newNumber.length()-1; i > 0; i--) {
-                if (i != 0) {
-                    if (newNumber[i] - 48 >= 5 && newNumber[i-1] != '9') {
-                        newNumber[i-1] ++;
-                    }
-                }
+            double num = int((abs(number) + pow(10, currentsigamount - sigamount) / 2)/ pow(10, currentsigamount - sigamount)) * pow(10, currentsigamount - sigamount);
+            //cout << to_string ((int)num) << endl;
 
-                newNumber[i] = '0';
-
-                if (getsigamount (stoi(newNumber), decimal, newNumber) == sigamount) {
-                    break;
-                } else if (getsigamount (stoi(newNumber), decimal, newNumber + ".") == sigamount) {
-                    newNumber = newNumber + ".";
-                    break;
-                }
-            }
-            
-            if (getsigamount (stoi(newNumber), decimal, newNumber) != sigamount) {
-                ss << fixed << setprecision (sigamount - 1) << sign * stod(newNumber) / pow (10.0, getdigits(stoi(newNumber)) - 1) << "e" << getdigits(stoi(newNumber)) - 1 << endl;     
+            if (getsigamount ((int)num, 0, to_string((int)num)) < sigamount) {
+            	ss << setsigamount (num, 0, to_string((int)num), sigamount);
             } else {
-                ss << newNumber << endl;
+            	ss << num << endl;
             }
         } else {
-        	int decimal_precision = getsigamount (whole_number, decimal, input) - sigamount;
+        	int decimal_precision = sigamount - getsigamount(whole_number, 0, to_string(whole_number) + ".");
 
-        	if (getsigamount(whole_number, 0, to_string(whole_number) + ".") == sigamount && getsigamount(whole_number, 0, to_string(whole_number)) != sigamount) {
+        	if (getsigamount(whole_number, 0, to_string(whole_number) + ".") == sigamount) {
 
-        		ss << whole_number << '.' << endl;
+        		if (getsigamount(whole_number, 0, to_string(whole_number)) != sigamount) {
+        			ss << (int)round(number) << '.' << endl;
+				} else {
+					ss << (int)round(number) << endl;
+				}
         		
         	} else if (getsigamount(whole_number, 0, to_string(whole_number) + ".") > sigamount) {
-        		ss << setsigamount (whole_number, 0, to_string(10 * int(whole_number/10)), sigamount);
-        	} else {
+        		ss << setsigamount (whole_number, 0, to_string((int)round(number)), sigamount);
+        	} else if (decimal_precision >= 0) {
         		ss << fixed << setprecision (decimal_precision) << number << endl;
         	}
         }
@@ -239,6 +264,7 @@ vector<string> splitinput (string input) {
 
 // EVALUATION
 // TODO: Evaluate Scientific Notation
+// TODO: Have the evaluation functions return a pair<string, double> 
 
 const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
@@ -259,7 +285,7 @@ double expression();
 double number()
 {
     double result ;
-    parse >> result ;                     
+    parse >> result ;                      
     return result;
 }
 
@@ -277,7 +303,7 @@ double factor()
     else if (peek() == '-')
     {
         get();
-        return -factor();
+        return -expression();
     }
     return 0; // error
 }
@@ -285,29 +311,27 @@ double factor()
 double term()
 {
     double result = factor();
-    while (peek() == '*' || peek() == '/') {
-        int sigfigs = min(getsigamount((int)result, result-(int)result, to_string(result)), getsigamount ((int)factor(), factor()-(int)factor(), to_string(factor())));
+    double fac = result;
+    while (peek() == '*' || peek() == '/')
         if (get() == '*') {
-            result *= factor();
+        	fac = factor ();
+        	cout << to_string (fac) << endl;
+            result *= fac;
         } else {
-            result /= factor();
+        	fac = factor();
+            result /= fac;
         }
-        result = stod (setsigamount ((int)result, result-(int)result, to_string(result), sigfigs));
-    }
     return result;
 }
 
 double expression()
 {
     double result = term();
-    while (peek() == '+' || peek() == '-') {
-        double scale = 1 / pow (10, min(getsigamount(0, result - (int)result, to_string(result)), getsigamount(0, term() - (int)term(), to_string(term()))));
+    while (peek() == '+' || peek() == '-')
         if (get() == '+')
-            result += term();           
+            result += term();
         else
             result -= term();
-        result = floor(result / scale + 0.5) * scale;
-    }
     return result;
 }
 
@@ -357,5 +381,5 @@ int main () {
 	expressionToParse = input_string.c_str();
 	parse.str (input_string);
 
-	cout << expression () << endl;
+	cout << "Calculated: " << expression () << endl;
 }
