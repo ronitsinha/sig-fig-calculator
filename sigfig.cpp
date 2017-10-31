@@ -263,8 +263,7 @@ vector<string> splitinput (string input) {
 }
 
 // EVALUATION
-// TODO: Evaluate Scientific Notation
-// TODO: Have the evaluation functions return a pair<string, double> 
+// TODO: Proper sigfigs for addition and subtraction 
 
 const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
@@ -339,13 +338,10 @@ pair<string, double> term()
     pair<string, double> fac = result;
     int sigfigs = 0;
     while (peek() == '*' || peek() == '/') {
-    	    cout << "HI" << endl;
 
         if (get() == '*') {
             fac = factor();
             sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
-            cout << "RESULT: " << result.first << " " << result.second << endl;
-            cout << "FAC: " << fac.first << " " << fac.second << endl;
             result.second *= fac.second;
             result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
             //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
@@ -353,8 +349,6 @@ pair<string, double> term()
         } else {
         	fac = factor();
             sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
-            cout << "RESULT: " << result.first << " " << result.second << endl;
-            cout << "FAC: " << fac.first << " " << fac.second << endl;
             result.second /= fac.second;
             result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
             //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
