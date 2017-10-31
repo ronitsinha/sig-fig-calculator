@@ -213,7 +213,7 @@ string setsigamount (int whn, double dci, string inpt, int sigamount) {
         if (input.find('.') == string::npos) {
             //newNumber << ((int)abs(number));
 
-            double num = int((abs(number) + pow(10, currentsigamount - sigamount) / 2)/ pow(10, currentsigamount - sigamount)) * pow(10, currentsigamount - sigamount);
+            double num = int((abs(number) + pow(10, getdigits((int)number) - sigamount) / 2)/ pow(10, getdigits((int)number) - sigamount)) * pow(10, getdigits((int)number) - sigamount);
             //cout << to_string ((int)num) << endl;
 
             if (getsigamount ((int)num, 0, to_string((int)num)) < sigamount) {
@@ -270,68 +270,116 @@ const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
 istringstream parse(expressionToParse) ;
 
-char peek()
-{
-    return static_cast<char>(parse.peek()) ;
+size_t strposition, prevpos = 0;
+
+char peek() {
+    return static_cast<char>(parse.peek());
 }
 
-char get()
-{
-    return static_cast<char>(parse.get()) ;                    
+char get() {
+    
+    return static_cast<char>(parse.get());
 }
 
-double expression();
+pair<string, double> expression();
 
-double number()
+pair<string, double> number()
 {
     double result ;
-    parse >> result ;                      
-    return result;
+    
+    strposition = parse.str().find_first_of("+-/*()", prevpos);
+
+    string resultstr = parse.str().substr(prevpos, strposition-prevpos);
+   
+
+    if (strposition == parse.str().length()-1) {
+        prevpos = string::npos;
+    } else {
+        prevpos = strposition+1;
+    }
+    
+    parse >> result ; 
+    cout << "NUMBER: " << resultstr << endl;
+
+    return make_pair(resultstr, result);
 }
 
-double factor()
+pair<string, double> factor()
 {
-    if ((peek() >= '0' && peek() <= '9') || peek() == '.')
+    if ((peek() >= '0' && peek() <= '9') || peek() == '.') {
         return number();
+    }
     else if (peek() == '(')
     {
         get(); // '('
-        double result = expression();
+        pair<string, double> result = expression();
+        cout << "EXPRESSION IN FACTOR: " << result.first << endl;
         get(); // ')'
         return result;
     }
     else if (peek() == '-')
     {
         get();
-        return -expression();
+        pair<string, double> fac = factor ();
+        string retstring = get<string>(fac);
+        if (get<string>(fac)[0] == '-') {
+            retstring = get<string>(fac).substr (1, string::npos);
+        } else {
+            retstring = "-" + get<string>(fac);
+        }
+
+        return make_pair (retstring, get<double>(fac) * -1);
     }
-    return 0; // error
+    return make_pair ("ERROR", 0); // error
 }
 
-double term()
+pair<string, double> term()
 {
-    double result = factor();
-    double fac = result;
-    while (peek() == '*' || peek() == '/')
+    pair<string, double> result = factor();
+    pair<string, double> fac = result;
+    int sigfigs = 0;
+    while (peek() == '*' || peek() == '/') {
+    	    cout << "HI" << endl;
+
         if (get() == '*') {
-        	fac = factor ();
-        	cout << to_string (fac) << endl;
-            result *= fac;
+            fac = factor();
+            sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
+            cout << "RESULT: " << result.first << " " << result.second << endl;
+            cout << "FAC: " << fac.first << " " << fac.second << endl;
+            result.second *= fac.second;
+            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+            //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
+            cout << "RESULT STRING: " << result.first << endl;
         } else {
         	fac = factor();
-            result /= fac;
+            sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
+            cout << "RESULT: " << result.first << " " << result.second << endl;
+            cout << "FAC: " << fac.first << " " << fac.second << endl;
+            result.second /= fac.second;
+            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+            //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
+            cout << "RESULT STRING: " << result.first << endl;
         }
+    }
+
+    result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
+    
+    cout << "FINAL TERM: " << result.first << endl;
+
     return result;
 }
 
-double expression()
+pair<string, double> expression()
 {
-    double result = term();
-    while (peek() == '+' || peek() == '-')
+    pair<string, double> result = term();
+    cout << "TERM IN EXPRESSION: " << result.first << endl;
+    while (peek() == '+' || peek() == '-') {
         if (get() == '+')
-            result += term();
+            result.second += term().second;
         else
-            result -= term();
+            result.second -= term().second;
+    }
+
     return result;
 }
 
@@ -375,11 +423,13 @@ int main () {
 
 		cout << "number: " << split[i] << endl;
 		cout << "current sigfigs: " << getsigamount (whole_number, decimal, split[i]) << endl;
-		cout << "with 3 sigfigs: " << setsigamount(whole_number, decimal, split[i], 3) << endl;
+		cout << "with 1 sigfig: " << setsigamount(whole_number, decimal, split[i], 1) << endl;
 	}
 
 	expressionToParse = input_string.c_str();
 	parse.str (input_string);
 
-	cout << "Calculated: " << expression () << endl;
+    pair <string, double> answer = expression();
+
+	cout << "Calculated:\nSTRING: " << answer.first + "\nDECIMAL: " << answer.second << endl;
 }
