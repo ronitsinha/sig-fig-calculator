@@ -206,10 +206,8 @@ string setsigamount (int whn, double dci, string inpt, int sigamount) {
         // decrease sigfigs
 
         if (input.find('.') == string::npos) {
-            //newNumber << ((int)abs(number));
 
             double num = int((abs(number) + pow(10, getdigits((int)number) - sigamount) / 2)/ pow(10, getdigits((int)number) - sigamount)) * pow(10, getdigits((int)number) - sigamount);
-            //cout << to_string ((int)num) << endl;
 
             if (getsigamount ((int)num, 0, to_string((int)num)) < sigamount) {
             	ss << setsigamount (num, 0, to_string((int)num), sigamount);
@@ -258,7 +256,7 @@ vector<string> splitinput (string input) {
 }
 
 // EVALUATION
-// TODO: Proper sigfigs for addition and subtraction 
+// TODO: Add support for scientific notation with negative exponents
 
 const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
@@ -284,12 +282,15 @@ pair<string, double> number()
     strposition = parse.str().find_first_of("+-/*()", prevpos);
 
     string resultstr = parse.str().substr(prevpos, strposition-prevpos);
-   
 
     if (strposition == parse.str().length()-1) {
         prevpos = string::npos;
     } else {
-        prevpos = strposition+1;
+        if (resultstr[resultstr.length()-1] == 'e') {
+            strposition = parse.str().find_first_of("+-*/()", strposition+1);
+            resultstr = parse.str().substr (prevpos, strposition-prevpos);
+        }   
+        prevpos = strposition + 1;
     }
     
     parse >> result ; 
