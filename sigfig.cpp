@@ -148,19 +148,14 @@ int getdigits (int num) {
     return digits;
 }
 
-int getdecimalplaces (double number) {
-	int places = 0;
-	
-	double num = abs(number);
-	num = num - (int)num;
+int getdecimalplaces (string numberString) {
+    int decimalplaces = 0;
 
-	while (num != 0) {
-		num *= 10;
-		places ++;
-		num = num - (int)num;
-	}
+    if (numberString.find_first_of('.') != string::npos && numberString.find_first_of('.') != numberString.length()-1) {
+        decimalplaces = numberString.substr (numberString.find_first_of('.')+1, string::npos).length();
+    }
 
-	return places;
+    return decimalplaces;
 }
 
 string setsigamount (int whn, double dci, string inpt, int sigamount) {
@@ -191,16 +186,16 @@ string setsigamount (int whn, double dci, string inpt, int sigamount) {
     
             if (hypotheticalsigamount > sigamount) {
                 // Scientific notation
-                ss << fixed << setprecision (sigamount - 1) << number / pow (10.0, getdigits((int)number) - 1) << "e" << getdigits((int)number) - 1 << endl;
+                ss << fixed << setprecision (sigamount - 1) << number / pow (10.0, getdigits((int)number) - 1) << "e" << getdigits((int)number) - 1;
             } else if (hypotheticalsigamount == sigamount) {
-                ss << number << "." << endl;
+                ss << number << ".";
             } else {
-                ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number << endl;
+                ss << fixed << setprecision (sigamount - hypotheticalsigamount) << number;
             }	
 		} else if (whole_number != 0) {
-            ss << fixed << setprecision (sigamount - getdigits(whole_number)) << number << endl;			
+            ss << fixed << setprecision (sigamount - getdigits(whole_number)) << number;			
 		} else {
-			ss << fixed << setprecision (sigamount) << number << endl;
+			ss << fixed << setprecision (sigamount) << number;
 		}
 	} else if (currentsigamount  > sigamount) {
         ss.str("");
@@ -219,7 +214,7 @@ string setsigamount (int whn, double dci, string inpt, int sigamount) {
             if (getsigamount ((int)num, 0, to_string((int)num)) < sigamount) {
             	ss << setsigamount (num, 0, to_string((int)num), sigamount);
             } else {
-            	ss << num << endl;
+            	ss << num;
             }
         } else {
         	int decimal_precision = sigamount - getsigamount(whole_number, 0, to_string(whole_number) + ".");
@@ -227,15 +222,15 @@ string setsigamount (int whn, double dci, string inpt, int sigamount) {
         	if (getsigamount(whole_number, 0, to_string(whole_number) + ".") == sigamount) {
 
         		if (getsigamount(whole_number, 0, to_string(whole_number)) != sigamount) {
-        			ss << (int)round(number) << '.' << endl;
+        			ss << (int)round(number) << '.';
 				} else {
-					ss << (int)round(number) << endl;
+					ss << (int)round(number);
 				}
         		
         	} else if (getsigamount(whole_number, 0, to_string(whole_number) + ".") > sigamount) {
         		ss << setsigamount (whole_number, 0, to_string((int)round(number)), sigamount);
         	} else if (decimal_precision >= 0) {
-        		ss << fixed << setprecision (decimal_precision) << number << endl;
+        		ss << fixed << setprecision (decimal_precision) << number;
         	}
         }
 	}
@@ -336,42 +331,50 @@ pair<string, double> term()
 {
     pair<string, double> result = factor();
     pair<string, double> fac = result;
-    int sigfigs = 0;
+    int sigfigs = getsigamount ((int)result.second, result.second-(int)result.second, result.first);
     while (peek() == '*' || peek() == '/') {
 
         if (get() == '*') {
             fac = factor();
             sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
             result.second *= fac.second;
-            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
-            //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
-            cout << "RESULT STRING: " << result.first << endl;
+            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs); 
         } else {
         	fac = factor();
             sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
             result.second /= fac.second;
             result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
-            //result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
-            cout << "RESULT STRING: " << result.first << endl;
         }
     }
 
     result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
-    
-    cout << "FINAL TERM: " << result.first << endl;
 
     return result;
 }
 
 pair<string, double> expression()
 {
+    stringstream resString;
     pair<string, double> result = term();
-    cout << "TERM IN EXPRESSION: " << result.first << endl;
+    pair<string, double> trm = result;
+    int decimalplaces = 0;
     while (peek() == '+' || peek() == '-') {
-        if (get() == '+')
-            result.second += term().second;
-        else
-            result.second -= term().second;
+        resString.str("");
+        if (get() == '+') {
+            trm = term();
+            decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
+            result.second += trm.second;
+            resString << fixed << setprecision (decimalplaces) << result.second;
+            result.first = resString.str();
+            result.second = stod(result.first);
+        } else {
+            trm = term();
+            decimalplaces = min (getdecimalplaces(trm.first), getdecimalplaces(result.first));
+            result.second -= trm.second;
+            resString << fixed << setprecision (decimalplaces) << result.second;
+            result.first = resString.str();
+            result.second = stod(result.first);
+        }   
     }
 
     return result;
