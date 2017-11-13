@@ -101,6 +101,17 @@ int getsigamount (int whole_number, double decimal, string input) {
 			return sigfigs;
 		}
 
+		string decimalsub = decimal_string.substr(decimal_string.find_first_of('.')+1, string::npos);
+
+		if (decimalsub.length() > 0) {
+			if (decimalsub.at(0)-'0' != 0) {
+				sigfigs = decimalsub.length();
+				return sigfigs;
+			}
+		} else {
+			return 0;
+		}
+
 		for (int i = 0; i < decimal_string.length(); i++) {
 			if (decimal_string.at(i) == '.') {
 				continue;
@@ -116,6 +127,7 @@ int getsigamount (int whole_number, double decimal, string input) {
 				sigfigs ++;
 				continue;
 			}
+
 
 			
 			for (int j = i-1; j > 0; j--) {
@@ -269,7 +281,8 @@ char peek() {
 }
 
 char get() {
-    
+    prevpos = strposition + 1;
+    strposition = parse.str().find_first_of("+-/*()", prevpos);    
     return static_cast<char>(parse.get());
 }
 
@@ -308,7 +321,6 @@ pair<string, double> factor()
     {
         get(); // '('
         pair<string, double> result = expression();
-        cout << "EXPRESSION IN FACTOR: " << result.first << endl;
         get(); // ')'
         return result;
     }
@@ -332,23 +344,34 @@ pair<string, double> term()
 {
     pair<string, double> result = factor();
     pair<string, double> fac = result;
+    int changeSigs = 0;
     int sigfigs = getsigamount ((int)result.second, result.second-(int)result.second, result.first);
     while (peek() == '*' || peek() == '/') {
 
         if (get() == '*') {
             fac = factor();
+            cout << result.first<<" SIGFIGS: " << getsigamount((int)result.second, result.second - (int)result.second, result.first) << endl;
+            cout << fac.first<<" SIGFIGS: " << getsigamount(fac.second, fac.second-(int)fac.second, fac.first) << endl;
             sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
             result.second *= fac.second;
             result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs); 
+            changeSigs = 1;
         } else {
         	fac = factor();
+        	cout << result.first<<" SIGFIGS: " << getsigamount((int)result.second, result.second - (int)result.second, result.first) << endl;
+            cout << fac.first<<" SIGFIGS: " << getsigamount(fac.second, fac.second-(int)fac.second, fac.first) << endl;
             sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
             result.second /= fac.second;
             result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+            changeSigs = 1;
         }
     }
 
-    result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
+    if (changeSigs == 1) {
+        result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
+    }
+
+    cout << "TERM RESULT: " << result.first << endl;
 
     return result;
 }
@@ -377,6 +400,8 @@ pair<string, double> expression()
             result.second = stod(result.first);
         }   
     }
+
+    cout << "EXPRESSION RESULT: " << result.first << endl;
 
     return result;
 }
