@@ -296,6 +296,8 @@ pair<string, double> number()
 
     string resultstr = parse.str().substr(prevpos, strposition-prevpos);
 
+    cout << "NUMBER: " << resultstr << endl;
+
     if (strposition == parse.str().length()-1) {
         prevpos = string::npos;
     } else {
@@ -304,17 +306,21 @@ pair<string, double> number()
             resultstr = parse.str().substr (prevpos, strposition-prevpos);
         }   
         prevpos = strposition + 1;
+        cout << "PREVPOS: " << prevpos << endl;
     }
     
-    parse >> result ; 
-    cout << "NUMBER: " << resultstr << endl;
+    parse >> result ;
+
+    if (peek() == 'c' || peek() == 'C') {
+        parse.get();
+    }
 
     return make_pair(resultstr, result);
 }
 
 pair<string, double> factor()
 {
-    if ((peek() >= '0' && peek() <= '9') || peek() == '.') {
+    if ((peek() >= '0' && peek() <= '9') || peek() == '.' || peek() == 'C' || peek() == 'c') {
         return number();
     }
     else if (peek() == '(')
@@ -344,26 +350,73 @@ pair<string, double> term()
 {
     pair<string, double> result = factor();
     pair<string, double> fac = result;
+    
+    /* changeSigs
+     * 0 = value is unchanged (no mathematical operation)
+     * 1 = value is changed (operation between two nonexact values)
+     * 2 = value is changed (operation between one or two exact values, meaning they have infinite sigfigs)
+    */
     int changeSigs = 0;
+    
+    
+
     int sigfigs = getsigamount ((int)result.second, result.second-(int)result.second, result.first);
+    
     while (peek() == '*' || peek() == '/') {
 
         if (get() == '*') {
-            fac = factor();
-            cout << result.first<<" SIGFIGS: " << getsigamount((int)result.second, result.second - (int)result.second, result.first) << endl;
-            cout << fac.first<<" SIGFIGS: " << getsigamount(fac.second, fac.second-(int)fac.second, fac.first) << endl;
-            sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
-            result.second *= fac.second;
-            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs); 
-            changeSigs = 1;
+            fac = factor(); 
+            
+            if (result.first.find('c') != string::npos || result.first.find('C') != string::npos) {
+                if (fac.first.find('c') != string::npos || fac.first.find('C') != string::npos) {  
+                    cout << "FACTOR: " << fac.first << endl;
+                    cout << "RES: " << result.first << endl;
+
+                    result.second *= fac.second;
+                    result.first = to_string (result.second) + "C";
+                } else {
+                    sigfigs = getsigamount(fac.second, fac.second - (int)fac.second, fac.first);
+                    result.second *= fac.second;
+                    result.first = setsigamount ((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+                    changeSigs = 2;
+                }   
+            } else if (fac.first.find('c') != string::npos || fac.first.find('C') != string::npos) {
+                sigfigs = getsigamount ((int)result.second, result.second-(int)result.second, result.first);
+                result.second *= fac.second;
+                result.first = setsigamount ((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+                changeSigs = 2;
+            } else {
+                sigfigs = min (getsigamount((int)result.second, result.second - (int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
+                result.second *= fac.second;
+                result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs); 
+                changeSigs = 1;
+            }   
         } else {
         	fac = factor();
         	cout << result.first<<" SIGFIGS: " << getsigamount((int)result.second, result.second - (int)result.second, result.first) << endl;
             cout << fac.first<<" SIGFIGS: " << getsigamount(fac.second, fac.second-(int)fac.second, fac.first) << endl;
-            sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
-            result.second /= fac.second;
-            result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
-            changeSigs = 1;
+            
+            if (result.first.find('c') != string::npos || result.first.find ('C') != string::npos) {
+                if (fac.first.find ('c') != string::npos || fac.first.find('C') != string::npos) {
+                    result.second /= fac.second;
+                    result.first = to_string (result.second) + "C";
+                } else {
+                    sigfigs = getsigamount (fac.second, fac.second - (int)fac.second, fac.first);
+                    result.second /= fac.second;
+                    result.first = setsigamount ((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+                    changeSigs = 2;
+                }
+            } else if (fac.first.find('c') != string::npos || fac.first.find('C') != string::npos) {
+                sigfigs = getsigamount ((int)result.second, result.second-(int)result.second, result.first);
+                result.second /= fac.second;
+                result.first = setsigamount ((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+                changeSigs = 2;               
+            } else {
+                sigfigs = min (getsigamount((int)result.second, result.second-(int)result.second, result.first), getsigamount(fac.second, fac.second-(int)fac.second, fac.first));
+                result.second /= fac.second;
+                result.first = setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs);
+                changeSigs = 1;
+            } 
         }
     }
 
