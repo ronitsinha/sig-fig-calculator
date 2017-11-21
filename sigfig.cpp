@@ -369,11 +369,10 @@ pair<string, double> term()
             
             if (result.first.find('c') != string::npos || result.first.find('C') != string::npos) {
                 if (fac.first.find('c') != string::npos || fac.first.find('C') != string::npos) {  
-                    cout << "FACTOR: " << fac.first << endl;
-                    cout << "RES: " << result.first << endl;
 
                     result.second *= fac.second;
                     result.first = to_string (result.second) + "C";
+
                 } else {
                     sigfigs = getsigamount(fac.second, fac.second - (int)fac.second, fac.first);
                     result.second *= fac.second;
@@ -392,9 +391,7 @@ pair<string, double> term()
                 changeSigs = 1;
             }   
         } else {
-        	fac = factor();
-        	cout << result.first<<" SIGFIGS: " << getsigamount((int)result.second, result.second - (int)result.second, result.first) << endl;
-            cout << fac.first<<" SIGFIGS: " << getsigamount(fac.second, fac.second-(int)fac.second, fac.first) << endl;
+            fac = factor();
             
             if (result.first.find('c') != string::npos || result.first.find ('C') != string::npos) {
                 if (fac.first.find ('c') != string::npos || fac.first.find('C') != string::npos) {
@@ -420,12 +417,6 @@ pair<string, double> term()
         }
     }
 
-    if (changeSigs == 1) {
-        result = make_pair (setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs), stod(setsigamount((int)result.second, result.second-(int)result.second, to_string(result.second), sigfigs)));
-    }
-
-    cout << "TERM RESULT: " << result.first << endl;
-
     return result;
 }
 
@@ -439,18 +430,62 @@ pair<string, double> expression()
         resString.str("");
         if (get() == '+') {
             trm = term();
-            decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
-            result.second += trm.second;
-            resString << fixed << setprecision (decimalplaces) << result.second;
-            result.first = resString.str();
-            result.second = stod(result.first);
+            
+	    if (result.first.find('c') != string::npos || result.first.find('C') != string::npos) {
+	    	if (trm.first.find('c') != string::npos || trm.first.find ('C') != string::npos) {
+			result.second += trm.second;
+			result.first = to_string (result.second) + "C";
+		} else {
+			decimalplaces = getdecimalplaces(trm.first);
+			result.second += trm.second;
+			resString << fixed << setprecision(decimalplaces) << result.second;
+			result.first = resString.str();
+			resString.str("");
+			result.second = stod(result.first);
+		}
+	    } else if (trm.first.find('c') != string::npos || trm.first.find('C') != string::npos) {
+	    	decimalplaces = getdecimalplaces(result.first);
+		result.second += trm.second;
+		resString << fixed << setprecision(decimalplaces) << result.second;
+		result.first = resString.str();
+		resString.str("");
+		result.second = stod(result.first);
+	    } else {
+	    	decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
+            	result.second += trm.second;
+            	resString << fixed << setprecision (decimalplaces) << result.second;
+            	result.first = resString.str();
+            	result.second = stod(result.first);
+	    }
         } else {
             trm = term();
-            decimalplaces = min (getdecimalplaces(trm.first), getdecimalplaces(result.first));
-            result.second -= trm.second;
-            resString << fixed << setprecision (decimalplaces) << result.second;
-            result.first = resString.str();
-            result.second = stod(result.first);
+            
+	    if (result.first.find('c') != string::npos || result.first.find('C') != string::npos) {
+	    	if (trm.first.find('c') != string::npos || trm.first.find ('C') != string::npos) {
+			result.second -= trm.second;
+			result.first = to_string (result.second) + "C";
+		} else {
+			decimalplaces = getdecimalplaces(trm.first);
+			result.second -= trm.second;
+			resString << fixed << setprecision(decimalplaces) << result.second;
+			result.first = resString.str();
+			resString.str("");
+			result.second = stod(result.first);
+		}
+	    } else if (trm.first.find('c') != string::npos || trm.first.find('C') != string::npos) {
+	    	decimalplaces = getdecimalplaces(result.first);
+		result.second -= trm.second;
+		resString << fixed << setprecision(decimalplaces) << result.second;
+		result.first = resString.str();
+		resString.str("");
+		result.second = stod(result.first);
+	    } else {
+	    	decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
+            	result.second -= trm.second;
+            	resString << fixed << setprecision (decimalplaces) << result.second;
+            	result.first = resString.str();
+            	result.second = stod(result.first);
+	    }
         }   
     }
 
