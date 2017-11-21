@@ -11,6 +11,11 @@
 using namespace std;
 
 int getsigamount (int whole_number, double decimal, string input) {
+	
+	if (input.find('C') != string::npos || input.find('c') != string::npos) {
+		// Will be recognized as code for infinite sigfigs.
+		return -42;
+	}
 
 	// TODO: use longs instead of ints to prevent number overflow. 
 	if (whole_number >= 2147483648 || whole_number <= -2147483648) {
@@ -533,7 +538,17 @@ int main () {
 		}
 
 		cout << "number: " << split[i] << endl;
-		cout << "current sigfigs: " << getsigamount (whole_number, decimal, split[i]) << endl;
+
+		if (getsigamount(whole_number,decimal,split[i]) == -42) {
+			cout << "current sigfigs: infinite" << endl;	
+		} else {
+			cout << "current sigfigs: " << getsigamount (whole_number, decimal, split[i]) << endl;
+		}
+
+		// Remove C and c for sigfig setting (messes with it)
+		split[i].erase (remove(split[i].begin(),split[i].end(), 'C'), split[i].end());
+		split[i].erase (remove(split[i].begin(),split[i].end(), 'c'), split[i].end());
+
 		cout << "with 1 sigfig: " << setsigamount(whole_number, decimal, split[i], 1) << endl;
 	}
 
