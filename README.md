@@ -9,7 +9,4 @@ things:
 
 ## To-do list
 * General code organization/clean-up
-* Add support for constants/accepted values (numbers with infinite sigfigs, possible specify them with a 'C', i.e 1C has infinite sigfigs)
-  - Detection of numbers with infinite sigfigs when getting sigfigs
-  - Support of number with infinite sigfigs for addition and subtraction
 * Possibly create a website for the calculator (would require everything to be rewritten in JS)
