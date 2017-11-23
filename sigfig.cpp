@@ -273,8 +273,7 @@ vector<string> splitinput (string input) {
 }
 
 // EVALUATION
-// TODO: Add support for scientific notation with negative exponents
-
+// TODO: Constants with Scientific Notation
 const char * expressionToParse = "6.5-2.5*10/5+2*5";
 
 istringstream parse(expressionToParse) ;
@@ -425,8 +424,11 @@ pair<string, double> term()
     return result;
 }
 
+// READ UP ON SIGFIGS WITH ADDITION/SUBTRACTION TO MAKE SURE OF THESE RULES (UNCERTAIN)
+
 pair<string, double> expression()
 {
+
     stringstream resString;
     pair<string, double> result = term();
     pair<string, double> trm = result;
@@ -441,7 +443,7 @@ pair<string, double> expression()
 			result.second += trm.second;
 			result.first = to_string (result.second) + "C";
 		} else {
-			decimalplaces = getdecimalplaces(trm.first);
+			decimalplaces = getdecimalplaces(trm.first.substr(0, trm.first.find('e')).substr(0, trm.first.find('E')));
 			result.second += trm.second;
 			resString << fixed << setprecision(decimalplaces) << result.second;
 			result.first = resString.str();
@@ -449,14 +451,14 @@ pair<string, double> expression()
 			result.second = stod(result.first);
 		}
 	    } else if (trm.first.find('c') != string::npos || trm.first.find('C') != string::npos) {
-	    	decimalplaces = getdecimalplaces(result.first);
+	    	decimalplaces = getdecimalplaces(result.first.substr(0, result.first.find('e')).substr(0, result.first.find('E')));
 		result.second += trm.second;
 		resString << fixed << setprecision(decimalplaces) << result.second;
 		result.first = resString.str();
 		resString.str("");
 		result.second = stod(result.first);
 	    } else {
-	    	decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
+	    	decimalplaces = min(getdecimalplaces(trm.first.substr(0, trm.first.find('e')).substr(0, trm.first.find('E'))), getdecimalplaces(result.first.substr(0, result.first.find('e')).substr(0, result.first.find('E'))));
             	result.second += trm.second;
             	resString << fixed << setprecision (decimalplaces) << result.second;
             	result.first = resString.str();
@@ -470,7 +472,7 @@ pair<string, double> expression()
 			result.second -= trm.second;
 			result.first = to_string (result.second) + "C";
 		} else {
-			decimalplaces = getdecimalplaces(trm.first);
+			decimalplaces = getdecimalplaces(trm.first.substr(0, trm.first.find('e')).substr(0, trm.first.find('E')));
 			result.second -= trm.second;
 			resString << fixed << setprecision(decimalplaces) << result.second;
 			result.first = resString.str();
@@ -478,15 +480,15 @@ pair<string, double> expression()
 			result.second = stod(result.first);
 		}
 	    } else if (trm.first.find('c') != string::npos || trm.first.find('C') != string::npos) {
-	    	decimalplaces = getdecimalplaces(result.first);
+	        decimalplaces = getdecimalplaces(result.first.substr(0, result.first.find('e')).substr(0, result.first.find('E')));	
 		result.second -= trm.second;
 		resString << fixed << setprecision(decimalplaces) << result.second;
 		result.first = resString.str();
 		resString.str("");
 		result.second = stod(result.first);
 	    } else {
-	    	decimalplaces = min(getdecimalplaces(trm.first), getdecimalplaces(result.first));
-            	result.second -= trm.second;
+		decimalplaces = min(getdecimalplaces(trm.first.substr(0, trm.first.find('e')).substr(0, trm.first.find('E'))), getdecimalplaces(result.first.substr(0, result.first.find('e')).substr(0, result.first.find('E'))));
+             	result.second -= trm.second;
             	resString << fixed << setprecision (decimalplaces) << result.second;
             	result.first = resString.str();
             	result.second = stod(result.first);
